@@ -1,16 +1,16 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css';
-import Testing from './pages/Testing';
+import React, { useEffect, useState } from 'react';
+import Login from './pages/Login.jsx';
+import CoreExecutiveDashboard from './pages/Dashboard.jsx';
 
-const App = () => {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Testing />} />
-        <Route path="/testing" element={<Testing />} />
-      </Routes>
-    </Router>
-  );
-};
+export default function App() {
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
 
-export default App;
+  useEffect(() => {
+    const onStorage = () => setToken(localStorage.getItem('token'));
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  return token ? <CoreExecutiveDashboard /> : <Login />;
+}
+
