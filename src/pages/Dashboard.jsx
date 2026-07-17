@@ -19,7 +19,7 @@ import {
   getActiveCashiers,
   getLowStock,
   getRecentTransactions,
-} from '../services/dashboard.js';
+} from '../services/admin.js';
 
 
 const HEX_BLUE = '#102C57';
