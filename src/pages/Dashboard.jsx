@@ -12,6 +12,11 @@ import {
 import ProductCatalog from './ProductCatalog.jsx';
 import CatalogAdmin from './admin/CatalogAdmin.jsx';
 import IngredientsAdmin from './admin/Ingredients.jsx';
+import StockAdmin from './admin/StockAdmin.jsx';
+import SuppliersAdmin from './admin/SuppliersAdmin.jsx';
+import UsersAdmin from './admin/UsersAdmin.jsx';
+import ReportsAdmin from './admin/ReportsAdmin.jsx';
+import TransactionsAdmin from './admin/TransactionsAdmin.jsx';
 import Placeholder from './admin/Placeholder.jsx';
 import { logout, getUser, getMe } from '../services/auth.js';
 import {
@@ -74,7 +79,6 @@ function LogoutIcon({ className = '' }) {
   return <Icon icon={ICONS.logout} className={className} style={{ color: HEX_BLUE }} />;
 }
 
-
 export default function CoreExecutiveDashboard() {
   const [user] = useState(() => getUser());
   const [dashboardUser, setDashboardUser] = useState(user);
@@ -90,6 +94,7 @@ export default function CoreExecutiveDashboard() {
 
   const [activeNav, setActiveNav] = useState('Dashboard');
   const [view, setView] = useState('Dashboard'); // 'Dashboard' | 'Catalog'
+
 
   const dropdownOptions = useMemo(() => ['Hari Ini', 'Minggu Ini', 'Bulan Ini'], []);
   const [salesRange, setSalesRange] = useState(dropdownOptions[0]);
@@ -322,15 +327,15 @@ export default function CoreExecutiveDashboard() {
             ) : view === 'IngredientsAdmin' ? (
               <IngredientsAdmin />
             ) : view === 'StockAdmin' ? (
-              <Placeholder title="Manajemen Stok" subtitle="Supply In / Stock Opname / Stock Out" />
+              <StockAdmin />
             ) : view === 'SuppliersAdmin' ? (
-              <Placeholder title="Suppliers" subtitle="CRUD Supplier" />
+              <SuppliersAdmin />
             ) : view === 'UsersAdmin' ? (
-              <Placeholder title="Manajemen Karyawan" subtitle="CRUD Users" />
+              <UsersAdmin />
             ) : view === 'ReportsAdmin' ? (
-              <Placeholder title="Laporan Staff" subtitle="Card ringkasan shift & performa" />
+              <ReportsAdmin />
             ) : view === 'TransactionsAdmin' ? (
-              <Placeholder title="Laporan Transaksi" subtitle="Riwayat transaksi & void" />
+              <TransactionsAdmin />
             ) : (
 
               <>

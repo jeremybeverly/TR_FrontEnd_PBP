@@ -10,12 +10,21 @@ export default function TransactionsAdmin() {
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState([]);
   const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [status, setStatus] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     if (invoiceNumber) params.append('invoice_number', invoiceNumber);
+    if (fromDate) params.append('from_date', fromDate);
+    if (toDate) params.append('to_date', toDate);
+    if (status) params.append('status', status);
+    if (paymentMethod) params.append('payment_method', paymentMethod);
     return params.toString();
-  }, [invoiceNumber]);
+  }, [invoiceNumber, fromDate, toDate, status, paymentMethod]);
+
 
   const load = async () => {
     setLoading(true);
@@ -38,21 +47,82 @@ export default function TransactionsAdmin() {
   return (
     <AdminLayout title="Laporan Transaksi (Admin)" subtitle="Riwayat transaksi & void">
       <div className="bg-white rounded-xl border p-4" style={{ borderColor: '#E5E7EB' }}>
-        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-          <div className="relative w-full md:w-80">
-            <input
-              type="text"
-              value={invoiceNumber}
-              onChange={(e) => setInvoiceNumber(e.target.value)}
-              placeholder="Filter invoice_number..."
-              className="w-full pl-4 pr-3 py-2 text-sm bg-gray-50 border rounded-lg focus:outline-none"
-              style={{ borderColor: '#E5E7EB' }}
-            />
+        <div className="flex flex-col gap-3 md:items-center md:justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="relative">
+              <label className="text-xs font-semibold" style={{ color: HEX_BLUE }}>
+                Invoice
+              </label>
+              <input
+                type="text"
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
+                placeholder="Filter invoice_number..."
+                className="w-full pl-4 pr-3 py-2 text-sm bg-gray-50 border rounded-lg focus:outline-none"
+                style={{ borderColor: '#E5E7EB' }}
+              />
+            </div>
+
+            <div className="relative">
+              <label className="text-xs font-semibold" style={{ color: HEX_BLUE }}>
+                From
+              </label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full px-3 py-2 text-sm border rounded-lg"
+                style={{ borderColor: '#E5E7EB' }}
+              />
+            </div>
+
+            <div className="relative">
+              <label className="text-xs font-semibold" style={{ color: HEX_BLUE }}>
+                To
+              </label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full px-3 py-2 text-sm border rounded-lg"
+                style={{ borderColor: '#E5E7EB' }}
+              />
+            </div>
+
+            <div className="relative">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold" style={{ color: HEX_BLUE }}>
+                  Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-gray-50 border rounded-lg"
+                  style={{ borderColor: '#E5E7EB' }}
+                >
+                  <option value="">Semua</option>
+                  <option value="success">success</option>
+                  <option value="voided">voided</option>
+                </select>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-gray-50 border rounded-lg"
+                  style={{ borderColor: '#E5E7EB' }}
+                >
+                  <option value="">Payment: semua</option>
+                  <option value="cash">cash</option>
+                  <option value="qris">qris</option>
+                </select>
+              </div>
+            </div>
           </div>
+
           <div className="text-xs font-semibold" style={{ color: HEX_BLUE }}>
             Total: {rows.length}
           </div>
         </div>
+
 
         <div className="mt-4 overflow-auto">
           {loading ? (
