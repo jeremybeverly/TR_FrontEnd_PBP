@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { api, resolveImageUrl } from '../../services/api';
 import AdminLayout from './AdminLayout.jsx';
 import Modal from './Modal.jsx';
 import FormField from './FormField.jsx';
+import { getIngredients, getModifierGroups } from '../../services/admin';
 
 const HEX_BLUE = '#102C57';
+
+function normalizeArray(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [];
+}
+
 
 export default function CatalogAdmin() {
   const [rows, setRows] = useState([]);
@@ -23,6 +30,38 @@ export default function CatalogAdmin() {
     is_available: true,
     image: null,
   });
+
+  // Options (master data)
+  const [ingredientsOptions, setIngredientsOptions] = useState([]);
+  const [modifierGroupOptions, setModifierGroupOptions] = useState([]);
+
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState(null);
+
+  const recipeMap = useMemo(() => {
+    const map = new Map();
+    for (const item of normalizeArray(form.recipe)) {
+      if (!item) continue;
+      const ingredientId = item.ingredient_id || item.ingredientId || item.id;
+      if (!ingredientId) continue;
+      const quantity = typeof item.quantity_required === 'number' ? item.quantity_required : Number(item.quantity_required ?? 0);
+      map.set(String(ingredientId), {
+        ingredient_id: String(ingredientId),
+        quantity_required: Number.isFinite(quantity) ? quantity : 0,
+      });
+    }
+    return map;
+  }, [form.recipe]);
+
+  const selectedModifierGroupsSet = useMemo(() => {
+    const set = new Set();
+    for (const id of normalizeArray(form.modifier_groups)) {
+      if (id == null) continue;
+      set.add(String(id));
+    }
+    return set;
+  }, [form.modifier_groups]);
+
 
   const load = async () => {
     setLoading(true);
@@ -70,6 +109,41 @@ export default function CatalogAdmin() {
     setModalOpen(true);
   };
 
+  useEffect(() => {
+    let ignore = false;
+    if (!modalOpen) return;
+
+    const loadOptions = async () => {
+      setOptionsLoading(true);
+      setOptionsError(null);
+      try {
+        const [ingRes, modGroupRes] = await Promise.all([
+          getIngredients(),
+          getModifierGroups(),
+        ]);
+
+        const ingPayload = ingRes?.data ?? ingRes ?? [];
+        const modGroupPayload = modGroupRes?.data ?? modGroupRes ?? [];
+
+        if (ignore) return;
+        setIngredientsOptions(Array.isArray(ingPayload) ? ingPayload : []);
+        setModifierGroupOptions(Array.isArray(modGroupPayload) ? modGroupPayload : []);
+      } catch (e) {
+        if (ignore) return;
+        setOptionsError(e?.message || 'Terjadi kesalahan');
+      } finally {
+        if (ignore) return;
+        setOptionsLoading(false);
+      }
+    };
+
+    loadOptions();
+    return () => {
+      ignore = true;
+    };
+  }, [modalOpen]);
+
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -95,11 +169,11 @@ export default function CatalogAdmin() {
       setModalOpen(false);
       await load();
     } catch (err) {
-      alert(err.message);
-    } finally {
-      setLoading(false);
+      alert(err?.message || 'Gagal menyimpan produk');
     }
+    setLoading(false);
   };
+
 
   const onDelete = async (id) => {
     if (!confirm('Hapus produk ini? (soft delete)')) return;
@@ -159,6 +233,7 @@ export default function CatalogAdmin() {
                   <th className="py-2">Kategori</th>
                   <th className="py-2">Harga</th>
                   <th className="py-2">Status</th>
+                  <th className="py-2">Gambar</th>
                   <th className="py-2 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -175,6 +250,22 @@ export default function CatalogAdmin() {
                         <span className="text-rose-700 font-semibold text-xs">
                           {!r.in_stock ? 'Stok Bahan Habis' : 'Nonaktif'}
                         </span>
+                      )}
+                    </td>
+                    <td className="py-3">
+                      {r.image_url ? (
+                        <img
+                          src={resolveImageUrl(r.image_url)}
+                          alt={r.product_name}
+                          className="h-12 w-12 rounded-md object-cover"
+                          onError={(event) => {
+                            event.currentTarget.src = '/placeholder-image.svg';
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-[10px] text-slate-500">
+                          No image
+                        </div>
                       )}
                     </td>
                     <td className="py-3 text-right">
@@ -269,47 +360,190 @@ export default function CatalogAdmin() {
             />
           </FormField>
 
-          <FormField label="Recipe JSON">
-            <textarea
-              className="w-full px-3 py-2 text-sm border rounded-lg"
-              style={{ borderColor: '#E5E7EB', minHeight: 110, fontFamily: 'monospace' }}
-              value={JSON.stringify(form.recipe || [], null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  setForm((p) => ({ ...p, recipe: parsed }));
-                } catch {
-                  // ignore parse error; user will see textarea content
-                  setForm((p) => ({ ...p, recipe: p.recipe }));
-                }
-              }}
-            />
+          <FormField label="Recipe (bahan + quantity)">
+            <div className="space-y-2">
+              <div className="text-xs text-gray-600">Pilih banyak ingredient, lalu atur quantity_required untuk tiap ingredient.</div>
+
+              {optionsLoading ? (
+                <div className="text-sm text-gray-500">Memuat list bahan...</div>
+              ) : optionsError ? (
+                <div className="text-sm text-rose-700">Gagal memuat bahan: {optionsError}</div>
+              ) : (
+                <select
+                  className="w-full px-3 py-2 text-sm border rounded-lg"
+                  style={{ borderColor: '#E5E7EB' }}
+                  value=""
+                  onChange={(e) => {
+                    const ingredientId = e.target.value;
+                    if (!ingredientId) return;
+
+                    setForm((p) => {
+                      const nextRecipe = normalizeArray(p.recipe).slice();
+                      const existing = nextRecipe.find((x) => String(x?.ingredient_id ?? x?.ingredientId ?? x?.id) === String(ingredientId));
+                      if (existing) return p;
+                      nextRecipe.push({ ingredient_id: String(ingredientId), quantity_required: 1 });
+                      return { ...p, recipe: nextRecipe };
+                    });
+
+                    // reset select (value controlled)
+                    e.target.value = '';
+                  }}
+                >
+                  <option value="">+ Tambah ingredient ke recipe</option>
+                  {ingredientsOptions.map((ing) => {
+                    const id = String(ing._id ?? ing.id);
+                    const alreadySelected = recipeMap.has(id);
+                    return (
+                      <option key={id} value={id} disabled={alreadySelected}>
+                        {ing.ingredient_name ?? ing.name ?? ing.label ?? id}
+                        {alreadySelected ? ' (sudah dipilih)' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+
+              {Array.from(recipeMap.values()).length === 0 ? (
+                <div className="text-sm text-gray-500">Belum ada ingredient dipilih.</div>
+              ) : (
+                <div className="space-y-2">
+                  {Array.from(recipeMap.values()).map((item) => {
+                    const selectedIngredient = ingredientsOptions.find(
+                      (x) => String(x._id ?? x.id) === String(item.ingredient_id)
+                    );
+                    const displayName =
+                      selectedIngredient?.ingredient_name ?? selectedIngredient?.name ?? selectedIngredient?.label ?? item.ingredient_id;
+
+                    return (
+                      <div key={item.ingredient_id} className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-slate-900 truncate">{displayName}</div>
+                        </div>
+                        <input
+                          type="number"
+                          min={0}
+                          step={1}
+                          className="w-28 px-3 py-2 text-sm border rounded-lg"
+                          style={{ borderColor: '#E5E7EB' }}
+                          value={item.quantity_required}
+                          onChange={(e) => {
+                            const qty = Number(e.target.value);
+                            setForm((p) => {
+                              const nextRecipe = normalizeArray(p.recipe).map((x) => {
+                                const ingredientId = String(x?.ingredient_id ?? x?.ingredientId ?? x?.id);
+                                if (ingredientId !== String(item.ingredient_id)) return x;
+                                return { ...x, ingredient_id: String(item.ingredient_id), quantity_required: Number.isFinite(qty) ? qty : 0 };
+                              });
+                              return { ...p, recipe: nextRecipe };
+                            });
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="px-3 py-2 rounded-lg border text-sm"
+                          style={{ borderColor: '#E5E7EB', color: '#B91C1C' }}
+                          onClick={() => {
+                            setForm((p) => {
+                              const nextRecipe = normalizeArray(p.recipe).filter((x) => {
+                                const ingredientId = String(x?.ingredient_id ?? x?.ingredientId ?? x?.id);
+                                return ingredientId !== String(item.ingredient_id);
+                              });
+                              return { ...p, recipe: nextRecipe };
+                            });
+                          }}
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </FormField>
 
-          <FormField label="Modifier Groups JSON (array of ObjectId) ">
-            <textarea
-              className="w-full px-3 py-2 text-sm border rounded-lg"
-              style={{ borderColor: '#E5E7EB', minHeight: 90, fontFamily: 'monospace' }}
-              value={JSON.stringify(form.modifier_groups || [], null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  setForm((p) => ({ ...p, modifier_groups: parsed }));
-                } catch {
-                  setForm((p) => ({ ...p, modifier_groups: p.modifier_groups }));
-                }
-              }}
-            />
+          <FormField label="Modifier Groups (pilih banyak)">
+            <div className="space-y-2">
+              <div className="text-xs text-gray-600">Pilih lebih dari 1 grup modifier.</div>
+
+              {optionsLoading ? (
+                <div className="text-sm text-gray-500">Memuat list modifier group...</div>
+              ) : optionsError ? (
+                <div className="text-sm text-rose-700">Gagal memuat modifier group: {optionsError}</div>
+              ) : (
+                <select
+                  className="w-full px-3 py-2 text-sm border rounded-lg"
+                  style={{ borderColor: '#E5E7EB' }}
+                  value=""
+                  onChange={(e) => {
+                    const groupId = e.target.value;
+                    if (!groupId) return;
+
+                    setForm((p) => {
+                      const current = normalizeArray(p.modifier_groups).map((x) => String(x));
+                      if (current.includes(String(groupId))) return p;
+                      return { ...p, modifier_groups: [...current, String(groupId)] };
+                    });
+
+                    e.target.value = '';
+                  }}
+                >
+                  <option value="">+ Tambah modifier group</option>
+                  {modifierGroupOptions.map((g) => {
+                    const id = String(g._id ?? g.id);
+                    const alreadySelected = selectedModifierGroupsSet.has(id);
+                    return (
+                      <option key={id} value={id} disabled={alreadySelected}>
+                        {g.modifier_group_name ?? g.name ?? g.label ?? id}
+                        {alreadySelected ? ' (sudah dipilih)' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+
+              {selectedModifierGroupsSet.size === 0 ? (
+                <div className="text-sm text-gray-500">Belum ada modifier group dipilih.</div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(selectedModifierGroupsSet).map((id) => {
+                    const g = modifierGroupOptions.find((x) => String(x._id ?? x.id) === String(id));
+                    const label = g?.modifier_group_name ?? g?.name ?? g?.label ?? id;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold"
+                        style={{ borderColor: '#E5E7EB', color: HEX_BLUE, background: '#F8FAFC' }}
+                      >
+                        {label}
+                        <button
+                          type="button"
+                          className="text-[10px] px-1 rounded hover:bg-gray-100"
+                          style={{ color: '#B91C1C' }}
+                          onClick={() => {
+                            setForm((p) => {
+                              const next = normalizeArray(p.modifier_groups).map((x) => String(x)).filter((x) => x !== String(id));
+                              return { ...p, modifier_groups: next };
+                            });
+                          }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </FormField>
 
           <div className="text-xs text-gray-600">
-            Format harus sesuai backend Product schema.
-            <div className="mt-1">Contoh recipe: [{"{\"ingredient_id\":\"ObjectId\",\"quantity_required\":1}"}]</div>
-            <div>Contoh modifier_groups: ["ObjectId1","ObjectId2"]</div>
+            Format recipe harus sesuai backend Product schema: <div className="mt-1">recipe = [{"{\"ingredient_id\":\"ObjectId\",\"quantity_required\":1}"}]</div>
+            <div>modifier_groups = ["ObjectId1","ObjectId2"]</div>
           </div>
 
-
           <div className="flex justify-end gap-3">
+
             <button
               type="button"
               onClick={() => setModalOpen(false)}

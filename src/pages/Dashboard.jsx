@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Icon } from '@iconify/react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -21,11 +22,25 @@ import {
   getRecentTransactions,
 } from '../services/admin.js';
 
-
 const HEX_BLUE = '#102C57';
 const HEX_SAND_1 = '#EADBC8';
 const HEX_SAND_2 = '#DAC0A3';
 const HEX_OFFWHITE = '#FEFAF6';
+
+const ICONS = {
+  triangleWarning: 'mdi:alert',
+  calendar: 'mdi:calendar',
+  logout: 'mdi:logout',
+  user: 'mdi:account-circle',
+  dashboard: 'mdi:view-dashboard',
+  products: 'mdi:package-variant-closed',
+  ingredients: 'mdi:food-variant',
+  stock: 'mdi:warehouse',
+  suppliers: 'mdi:truck',
+  employees: 'mdi:account-group',
+  reports: 'mdi:file-chart',
+  transactions: 'mdi:receipt',
+};
 
 function formatIDR(value) {
   if (typeof value !== 'number') return value;
@@ -38,217 +53,27 @@ function formatMillionsTick(value) {
   return `${Math.round(value / 1_000_000)}M`;
 }
 
-function TriangleWarningIcon({ className = '' }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M12 3L2 21H22L12 3Z"
-        fill="#EF4444"
-        stroke="#EF4444"
-        strokeWidth="1"
-      />
-      <path
-        d="M12 9V13"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 17H12.01"
-        stroke="white"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function CalendarIcon({ className = '' }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M8 2V5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M16 2V5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M3 9H21"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5Z"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
-function LogoutIcon({ className = '' }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M10 7V5C10 3.89543 10.8954 3 12 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21H12C10.8954 21 10 20.1046 10 19V17"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M3 12H13"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M6 9L3 12L6 15"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function UserIcon({ className = '' }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M20 21C20 17.134 16.4183 14 12 14C7.58172 14 4 17.134 4 21"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 11C15.3137 11 18 8.31371 18 5C18 1.68629 15.3137 -1 12 -1C8.68629 -1 6 1.68629 6 5C6 8.31371 8.68629 11 12 11Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        transform="translate(0 2)"
-      />
-    </svg>
-  );
+  return <Icon icon={ICONS.user} className={className} style={{ color: HEX_BLUE }} />;
 }
 
 function SidebarNavIcon({ variant, className = '' }) {
-  const stroke = HEX_BLUE;
-  const common = {
-    fill: 'none',
-    xmlns: 'http://www.w3.org/2000/svg',
-    viewBox: '0 0 24 24',
-    className,
-    'aria-hidden': true,
-  };
-
-  switch (variant) {
-    case 'dashboard':
-      return (
-        <svg {...common}>
-          <path d="M3 13h8V3H3v10Z" stroke={stroke} strokeWidth="2" />
-          <path d="M13 21h8V11h-8v10Z" stroke={stroke} strokeWidth="2" />
-          <path d="M13 3h8v6h-8V3Z" stroke={stroke} strokeWidth="2" />
-          <path d="M3 21h8v-6H3v6Z" stroke={stroke} strokeWidth="2" />
-        </svg>
-      );
-    case 'products':
-      return (
-        <svg {...common}>
-          <path d="M21 8.5L12 3 3 8.5 12 14l9-5.5Z" stroke={stroke} strokeWidth="2" />
-          <path d="M3 8.5V16.5L12 22l9-5.5V8.5" stroke={stroke} strokeWidth="2" />
-          <path d="M12 14v8" stroke={stroke} strokeWidth="2" />
-        </svg>
-      );
-    case 'ingredients':
-      return (
-        <svg {...common}>
-          <path d="M7 3h10v4H7V3Z" stroke={stroke} strokeWidth="2" />
-          <path d="M7 7v14h10V7" stroke={stroke} strokeWidth="2" />
-          <path d="M9 11h6" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-          <path d="M9 15h6" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'stock':
-      return (
-        <svg {...common}>
-          <path d="M21 16V8a2 2 0 0 0-1-1.73L13 3l-8 3.27A2 2 0 0 0 4 8v8a2 2 0 0 0 1 1.73L12 21l8-3.27A2 2 0 0 0 21 16Z" stroke={stroke} strokeWidth="2" />
-          <path d="M12 7v10" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'suppliers':
-      return (
-        <svg {...common}>
-          <path d="M3 7l9-4 9 4-9 4-9-4Z" stroke={stroke} strokeWidth="2" />
-          <path d="M3 7v10l9 4 9-4V7" stroke={stroke} strokeWidth="2" />
-          <path d="M12 11v10" stroke={stroke} strokeWidth="2" />
-        </svg>
-      );
-    case 'employees':
-      return (
-        <svg {...common}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-          <path d="M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke={stroke} strokeWidth="2" />
-          <path d="M20 21v-2a4 4 0 0 0-3-3.87" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-          <path d="M17 3.13a4 4 0 0 1 0 7.75" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'reports':
-      return (
-        <svg {...common}>
-          <path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14" stroke={stroke} strokeWidth="2" />
-          <path d="M8 7h8" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-          <path d="M8 11h8" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-          <path d="M8 15h6" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'transactions':
-      return (
-        <svg {...common}>
-          <path d="M2 9l3-3 3 3" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M5 6v10a2 2 0 0 0 2 2h15" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-          <path d="M22 15l-3 3-3-3" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    default:
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="9" stroke={stroke} strokeWidth="2" />
-        </svg>
-      );
-  }
+  const icon = ICONS[variant] || 'mdi:help-circle';
+  return <Icon icon={icon} className={className} style={{ color: HEX_BLUE }} />;
 }
+
+function CalendarIcon({ className = '' }) {
+  return <Icon icon={ICONS.calendar} className={className} style={{ color: HEX_BLUE }} />;
+}
+
+function TriangleWarningIcon({ className = '' }) {
+  return <Icon icon={ICONS.triangleWarning} className={className} style={{ color: '#EF4444' }} />;
+}
+
+function LogoutIcon({ className = '' }) {
+  return <Icon icon={ICONS.logout} className={className} style={{ color: HEX_BLUE }} />;
+}
+
 
 export default function CoreExecutiveDashboard() {
   const [user] = useState(() => getUser());
@@ -542,9 +367,7 @@ export default function CoreExecutiveDashboard() {
                         </div>
                       </div>
                       <div className="w-9 h-9 rounded-lg bg-[#EADBC8]/60 flex items-center justify-center">
-                        <span className="text-sm" style={{ color: HEX_BLUE }}>
-                          $
-                        </span>
+                        <Icon icon="mdi:cash-multiple" className="w-5 h-5" style={{ color: HEX_BLUE }} />
                       </div>
                     </div>
                   </div>
@@ -560,9 +383,7 @@ export default function CoreExecutiveDashboard() {
                         </div>
                       </div>
                       <div className="w-9 h-9 rounded-lg bg-[#DAC0A3]/50 flex items-center justify-center">
-                        <span className="text-sm" style={{ color: HEX_BLUE }}>
-                          %
-                        </span>
+                        <Icon icon="mdi:cash-check" className="w-5 h-5" style={{ color: HEX_BLUE }} />
                       </div>
                     </div>
                   </div>
@@ -578,9 +399,7 @@ export default function CoreExecutiveDashboard() {
                         </div>
                       </div>
                       <div className="w-9 h-9 rounded-lg bg-[#EADBC8]/60 flex items-center justify-center">
-                        <span className="text-sm" style={{ color: HEX_BLUE }}>
-                          ≋
-                        </span>
+                        <Icon icon="mdi:receipt" className="w-5 h-5" style={{ color: HEX_BLUE }} />
                       </div>
                     </div>
                   </div>
