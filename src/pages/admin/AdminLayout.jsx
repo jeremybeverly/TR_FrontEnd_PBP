@@ -27,10 +27,6 @@ export default function AdminLayout({ title, subtitle, children, rightActions })
             </div>
 
             <div className="mt-6">{children}</div>
-
-            <div className="mt-6 text-xs text-gray-500" style={{ color: HEX_BLUE, opacity: 0.75 }}>
-                Powered by BackendPOSPBP • UI Admin
-            </div>
         </div>
     );
 }

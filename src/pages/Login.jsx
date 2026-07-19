@@ -9,11 +9,11 @@ const HEX_SAND_1 = '#EADBC8';
 
 
 const ICONS = {
-  coffee: 'mdi:coffee',
-  user: 'mdi:account-circle',
-  lock: 'mdi:lock',
-  eye: 'mdi:eye',
-  eyeOff: 'mdi:eye-off',
+    coffee: 'mdi:coffee',
+    user: 'mdi:account-circle',
+    lock: 'mdi:lock',
+    eye: 'mdi:eye',
+    eyeOff: 'mdi:eye-off',
 };
 
 export default function Login() {
@@ -122,9 +122,9 @@ export default function Login() {
                                 aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                             >
                                 <Icon
-                                  icon={showPassword ? ICONS.eyeOff : ICONS.eye}
-                                  className="w-5 h-5"
-                                  style={{ color: HEX_BLUE }}
+                                    icon={showPassword ? ICONS.eyeOff : ICONS.eye}
+                                    className="w-5 h-5"
+                                    style={{ color: HEX_BLUE }}
                                 />
                             </button>
 

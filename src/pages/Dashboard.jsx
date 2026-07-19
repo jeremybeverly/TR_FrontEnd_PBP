@@ -96,9 +96,6 @@ export default function CoreExecutiveDashboard() {
   const [view, setView] = useState('Dashboard'); // 'Dashboard' | 'Catalog'
 
 
-  const dropdownOptions = useMemo(() => ['Hari Ini', 'Minggu Ini', 'Bulan Ini'], []);
-  const [salesRange, setSalesRange] = useState(dropdownOptions[0]);
-
   useEffect(() => {
     let alive = true;
 
@@ -474,20 +471,7 @@ export default function CoreExecutiveDashboard() {
                       <h2 className="font-bold" style={{ color: HEX_BLUE }}>
                         Grafik Tren Penjualan Harian
                       </h2>
-                      <div className="flex items-center gap-2">
-                        <select
-                          className="text-sm rounded-lg px-3 py-2 border"
-                          value={salesRange}
-                          onChange={(e) => setSalesRange(e.target.value)}
-                          style={{ borderColor: HEX_BLUE, color: HEX_BLUE, backgroundColor: '#FFFFFF' }}
-                        >
-                          {dropdownOptions.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+
                     </div>
 
                     <div className="mt-4" style={{ height: 280 }}>

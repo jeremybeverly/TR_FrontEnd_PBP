@@ -44,14 +44,20 @@ export default function CatalogAdmin() {
       if (!item) continue;
       const ingredientId = item.ingredient_id || item.ingredientId || item.id;
       if (!ingredientId) continue;
-      const quantity = typeof item.quantity_required === 'number' ? item.quantity_required : Number(item.quantity_required ?? 0);
+      const quantity =
+        typeof item.quantity_required === 'number'
+          ? item.quantity_required
+          : Number(item.quantity_required ?? 0);
+      const unit = item.unit || item.uom || item.unit_required || item.unitName || ''; // tolerate backend variants
       map.set(String(ingredientId), {
         ingredient_id: String(ingredientId),
         quantity_required: Number.isFinite(quantity) ? quantity : 0,
+        unit: String(unit || ''),
       });
     }
     return map;
   }, [form.recipe]);
+
 
   const selectedModifierGroupsSet = useMemo(() => {
     const set = new Set();
@@ -360,9 +366,10 @@ export default function CatalogAdmin() {
             />
           </FormField>
 
-          <FormField label="Recipe (bahan + quantity)">
+      <FormField label="Recipe (bahan + quantity)">
             <div className="space-y-2">
-              <div className="text-xs text-gray-600">Pilih banyak ingredient, lalu atur quantity_required untuk tiap ingredient.</div>
+              <div className="text-xs text-gray-600">Pilih ingredient, lalu atur quantity_required dan unit untuk tiap ingredient.</div>
+
 
               {optionsLoading ? (
                 <div className="text-sm text-gray-500">Memuat list bahan...</div>
@@ -381,7 +388,13 @@ export default function CatalogAdmin() {
                       const nextRecipe = normalizeArray(p.recipe).slice();
                       const existing = nextRecipe.find((x) => String(x?.ingredient_id ?? x?.ingredientId ?? x?.id) === String(ingredientId));
                       if (existing) return p;
-                      nextRecipe.push({ ingredient_id: String(ingredientId), quantity_required: 1 });
+
+                      nextRecipe.push({
+                        ingredient_id: String(ingredientId),
+                        quantity_required: 1,
+                        unit: 'gr',
+                      });
+
                       return { ...p, recipe: nextRecipe };
                     });
 
@@ -432,12 +445,37 @@ export default function CatalogAdmin() {
                               const nextRecipe = normalizeArray(p.recipe).map((x) => {
                                 const ingredientId = String(x?.ingredient_id ?? x?.ingredientId ?? x?.id);
                                 if (ingredientId !== String(item.ingredient_id)) return x;
-                                return { ...x, ingredient_id: String(item.ingredient_id), quantity_required: Number.isFinite(qty) ? qty : 0 };
+                                return {
+                                  ...x,
+                                  ingredient_id: String(item.ingredient_id),
+                                  quantity_required: Number.isFinite(qty) ? qty : 0,
+                                };
                               });
                               return { ...p, recipe: nextRecipe };
                             });
                           }}
                         />
+                        <select
+                          className="w-28 px-3 py-2 text-sm border rounded-lg"
+                          style={{ borderColor: '#E5E7EB' }}
+                          value={String(item.unit || '') || 'gr'}
+                          onChange={(e) => {
+                            const nextUnit = e.target.value;
+                            setForm((p) => {
+                              const nextRecipe = normalizeArray(p.recipe).map((x) => {
+                                const ingredientId = String(x?.ingredient_id ?? x?.ingredientId ?? x?.id);
+                                if (ingredientId !== String(item.ingredient_id)) return x;
+                                return { ...x, unit: nextUnit };
+                              });
+                              return { ...p, recipe: nextRecipe };
+                            });
+                          }}
+                        >
+                          <option value="gr">Gram (gr)</option>
+                          <option value="ml">Milliliter (ml)</option>
+                          <option value="pcs">Pieces (pcs)</option>
+                        </select>
+
                         <button
                           type="button"
                           className="px-3 py-2 rounded-lg border text-sm"
@@ -492,55 +530,58 @@ export default function CatalogAdmin() {
                   {modifierGroupOptions.map((g) => {
                     const id = String(g._id ?? g.id);
                     const alreadySelected = selectedModifierGroupsSet.has(id);
+                    const label = g.modifier_group_name ?? g.group_name ?? g.groupName ?? g.group_name2 ?? g.modifierName ?? g.name ?? g.label ?? g.title ?? g.modifier_title ?? id;
                     return (
                       <option key={id} value={id} disabled={alreadySelected}>
-                        {g.modifier_group_name ?? g.name ?? g.label ?? id}
+                        {label}
                         {alreadySelected ? ' (sudah dipilih)' : ''}
                       </option>
                     );
                   })}
+
                 </select>
               )}
 
               {selectedModifierGroupsSet.size === 0 ? (
                 <div className="text-sm text-gray-500">Belum ada modifier group dipilih.</div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(selectedModifierGroupsSet).map((id) => {
-                    const g = modifierGroupOptions.find((x) => String(x._id ?? x.id) === String(id));
-                    const label = g?.modifier_group_name ?? g?.name ?? g?.label ?? id;
-                    return (
-                      <span
-                        key={id}
-                        className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold"
-                        style={{ borderColor: '#E5E7EB', color: HEX_BLUE, background: '#F8FAFC' }}
-                      >
-                        {label}
-                        <button
-                          type="button"
-                          className="text-[10px] px-1 rounded hover:bg-gray-100"
-                          style={{ color: '#B91C1C' }}
-                          onClick={() => {
-                            setForm((p) => {
-                              const next = normalizeArray(p.modifier_groups).map((x) => String(x)).filter((x) => x !== String(id));
-                              return { ...p, modifier_groups: next };
-                            });
-                          }}
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-600">Modifier group yang dipilih:</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {Array.from(selectedModifierGroupsSet).map((id) => {
+                      const g = modifierGroupOptions.find((x) => String(x._id ?? x.id) === String(id));
+                      const label = g?.modifier_group_name ?? g?.group_name ?? g?.groupName ?? g?.name ?? g?.label ?? g?.title ?? id;
+
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 bg-white"
+                          style={{ borderColor: '#E5E7EB' }}
                         >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  })}
+                          <div className="text-sm font-semibold text-slate-900 truncate">{label}</div>
+                          <button
+                            type="button"
+                            className="px-2 py-1 text-xs rounded-lg border hover:bg-gray-50"
+                            style={{ borderColor: '#E5E7EB', color: '#B91C1C' }}
+                            onClick={() => {
+                              setForm((p) => {
+                                const next = normalizeArray(p.modifier_groups)
+                                  .map((x) => String(x))
+                                  .filter((x) => x !== String(id));
+                                return { ...p, modifier_groups: next };
+                              });
+                            }}
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           </FormField>
-
-          <div className="text-xs text-gray-600">
-            Format recipe harus sesuai backend Product schema: <div className="mt-1">recipe = [{"{\"ingredient_id\":\"ObjectId\",\"quantity_required\":1}"}]</div>
-            <div>modifier_groups = ["ObjectId1","ObjectId2"]</div>
-          </div>
 
           <div className="flex justify-end gap-3">
 

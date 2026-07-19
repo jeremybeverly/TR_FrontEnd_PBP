@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminLayout from './AdminLayout.jsx';
-import { api } from '../../services/api';
+import { getAdminTransactionList } from '../../services/reportsAdmin.js';
 
 const HEX_BLUE = '#102C57';
 
@@ -14,6 +14,16 @@ export default function TransactionsAdmin() {
   const [toDate, setToDate] = useState('');
   const [status, setStatus] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [pageSize, setPageSize] = useState(15);
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return rows.slice(start, end);
+  }, [rows, page, pageSize]);
+
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -29,8 +39,8 @@ export default function TransactionsAdmin() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/transactions${queryParams ? `?${queryParams}` : ''}`, { tokenRequired: true });
-      // backend: res.json({ data: transactions });
+      const qs = queryParams ? `?${queryParams}` : '';
+      const res = await getAdminTransactionList(qs);
       setRows(res.data || res || []);
     } catch (err) {
       alert(err.message);
@@ -142,7 +152,7 @@ export default function TransactionsAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {pagedRows.map((r) => (
                   <tr key={r._id} className="border-t" style={{ borderColor: '#F3F4F6' }}>
                     <td className="py-3 font-semibold">{r.invoice_number}</td>
                     <td className="py-3">{r.payment_method}</td>
@@ -157,9 +167,54 @@ export default function TransactionsAdmin() {
           )}
         </div>
 
-        <div className="mt-4 text-xs text-gray-600">
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="text-xs font-semibold" style={{ color: HEX_BLUE }}>
+            Halaman {page} / {totalPages} (menampilkan {pagedRows.length} dari {rows.length})
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setPage(1); }}
+              className="px-3 py-2 text-sm bg-gray-50 border rounded-lg"
+              style={{ borderColor: '#E5E7EB' }}
+              disabled={page === 1}
+            >
+              First
+            </button>
+            <button
+              type="button"
+              onClick={() => { if (page > 1) setPage(page - 1); }}
+              className="px-3 py-2 text-sm bg-gray-50 border rounded-lg"
+              style={{ borderColor: '#E5E7EB' }}
+              disabled={page === 1}
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() => { if (page < totalPages) setPage(page + 1); }}
+              className="px-3 py-2 text-sm bg-gray-50 border rounded-lg"
+              style={{ borderColor: '#E5E7EB' }}
+              disabled={page === totalPages}
+            >
+              Next
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPage(totalPages); }}
+              className="px-3 py-2 text-sm bg-gray-50 border rounded-lg"
+              style={{ borderColor: '#E5E7EB' }}
+              disabled={page === totalPages}
+            >
+              Last
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-3 text-xs text-gray-600">
           Catatan: endpoint void hanya diizinkan untuk role cashier.
         </div>
+
       </div>
     </AdminLayout>
   );
