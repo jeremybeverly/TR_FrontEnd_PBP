@@ -196,8 +196,7 @@ export default function CatalogAdmin() {
 
   return (
     <AdminLayout
-      title="Katalog Produk (Admin)"
-      subtitle="CRUD Produk (produk card, toggle available, recipe/modifier groups diisi manual bila perlu)"
+      title="Katalog Produk"
       rightActions={
         <button
           type="button"
@@ -357,7 +356,7 @@ export default function CatalogAdmin() {
             </FormField>
           </div>
 
-          <FormField label="Upload image (opsional)">
+          <FormField label="Unggah Gambar (opsional)">
             <input
               type="file"
               className="w-full px-3 py-2 text-sm border rounded-lg"
@@ -366,9 +365,9 @@ export default function CatalogAdmin() {
             />
           </FormField>
 
-      <FormField label="Recipe (bahan + quantity)">
+      <FormField label="Resep">
             <div className="space-y-2">
-              <div className="text-xs text-gray-600">Pilih ingredient, lalu atur quantity_required dan unit untuk tiap ingredient.</div>
+              <div className="text-xs text-gray-600">Pilih Bahan Baku bisa lebih dari 1.</div>
 
 
               {optionsLoading ? (
@@ -402,7 +401,7 @@ export default function CatalogAdmin() {
                     e.target.value = '';
                   }}
                 >
-                  <option value="">+ Tambah ingredient ke recipe</option>
+                  <option value="">+ Tambah bahan baku ke resep</option>
                   {ingredientsOptions.map((ing) => {
                     const id = String(ing._id ?? ing.id);
                     const alreadySelected = recipeMap.has(id);
@@ -417,7 +416,7 @@ export default function CatalogAdmin() {
               )}
 
               {Array.from(recipeMap.values()).length === 0 ? (
-                <div className="text-sm text-gray-500">Belum ada ingredient dipilih.</div>
+                <div className="text-sm text-gray-500">Belum ada bahan baku dipilih.</div>
               ) : (
                 <div className="space-y-2">
                   {Array.from(recipeMap.values()).map((item) => {

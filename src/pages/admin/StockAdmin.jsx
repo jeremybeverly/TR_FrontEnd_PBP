@@ -186,8 +186,7 @@ export default function StockAdmin() {
 
   return (
     <AdminLayout
-      title="Manajemen Stok (Admin)"
-      subtitle="Supply In / Stock Opname / Stock Out"
+      title="Manajemen Stock"
       rightActions={
         <div className="flex gap-2">
           <button
@@ -216,7 +215,7 @@ export default function StockAdmin() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari ingredient (nama/SKU/unit)..."
+              placeholder="Cari ingredient (nama/kode/unit)..."
               className="w-full pl-4 pr-3 py-2 text-sm bg-gray-50 border rounded-lg focus:outline-none"
               style={{ borderColor: '#E5E7EB' }}
             />
@@ -233,7 +232,7 @@ export default function StockAdmin() {
             className="px-3 py-2 text-xs font-semibold rounded-lg"
             style={{ border: `1px solid #E5E7EB`, color: HEX_BLUE, backgroundColor: '#fff' }}
           >
-            Stock Out (Damaged)
+            Stock Out (Rusak)
           </button>
           <button
             type="button"
@@ -241,7 +240,7 @@ export default function StockAdmin() {
             className="px-3 py-2 text-xs font-semibold rounded-lg"
             style={{ border: `1px solid #E5E7EB`, color: HEX_BLUE, backgroundColor: '#fff' }}
           >
-            Stock Out (Expired)
+            Stock Out (Kadaluwarsa)
           </button>
         </div>
 

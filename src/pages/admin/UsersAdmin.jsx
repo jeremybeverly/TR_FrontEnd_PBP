@@ -28,18 +28,23 @@ export default function UsersAdmin() {
     try {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
+      // role dikirim apa adanya, backend sudah normalisasi ke lowercase
       if (role) params.append('role', role);
-      const res = await getUsers(params.toString() ? `?${params.toString()}` : '');
+      const res = await getUsers(params.toString());
       setRows(res.data || []);
+
+
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // reset page/state if needed in future
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, role]);
+
 
   const openCreate = () => {
     setEditingId(null);
@@ -85,12 +90,21 @@ export default function UsersAdmin() {
     }
   };
 
-  const onDelete = async (id) => {
-    if (!confirm('Nonaktifkan user ini?')) return;
+  const onToggleActive = async (row) => {
+    const nextActive = !row.is_active;
+    const ok = confirm(nextActive ? 'Aktifkan user ini?' : 'Nonaktifkan user ini?');
+    if (!ok) return;
+
     setLoading(true);
     try {
-      await deleteUser(id);
+      // backend saat ini: `deleteUser` = nonaktifkan, jadi untuk aktivasi pakai updateUser
+      if (!nextActive) {
+        await deleteUser(row._id);
+      } else {
+        await updateUser(row._id, { is_active: true });
+      }
       await load();
+
     } catch (err) {
       alert(err.message);
     } finally {
@@ -100,8 +114,7 @@ export default function UsersAdmin() {
 
   return (
     <AdminLayout
-      title="Manajemen Karyawan (Admin)"
-      subtitle="CRUD Users (nonaktif via delete)"
+      title="Manajemen Karyawan"
       rightActions={
         <button
           type="button"
@@ -140,12 +153,17 @@ export default function UsersAdmin() {
         </div>
 
         <div className="mt-4 overflow-auto">
+          <div className="mb-2 text-xs" style={{ color: HEX_BLUE }}>
+            Filter role: <span className="font-semibold">{role ? role : 'Semua'}</span> — menampilkan {rows.length} user
+          </div>
           {loading ? (
+
             <div className="py-10 text-center text-gray-500">Memuat...</div>
           ) : rows.length === 0 ? (
             <div className="py-10 text-center text-gray-500">Tidak ada data.</div>
           ) : (
             <table className="w-full text-sm">
+
               <thead>
                 <tr className="text-left text-xs text-gray-500">
                   <th className="py-2">Nama</th>
@@ -172,12 +190,21 @@ export default function UsersAdmin() {
                           Edit
                         </button>
                         <button
-                          className="px-3 py-1 rounded-lg border hover:bg-rose-50 text-xs"
-                          style={{ borderColor: '#FCA5A5', color: '#B91C1C' }}
-                          onClick={() => onDelete(r._id)}
+                          className={
+                            r.is_active
+                              ? "px-3 py-1 rounded-lg border hover:bg-rose-50 text-xs"
+                              : "px-3 py-1 rounded-lg border hover:bg-emerald-50 text-xs"
+                          }
+                          style={{
+                            borderColor: r.is_active ? '#FCA5A5' : '#A7F3D0',
+                            color: r.is_active ? '#B91C1C' : '#047857',
+                          }}
+                          onClick={() => onToggleActive(r)}
                         >
-                          Nonaktif
+                          {r.is_active ? 'Nonaktif' : 'Aktif'}
                         </button>
+
+
                       </div>
                     </td>
                   </tr>

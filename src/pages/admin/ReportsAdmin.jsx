@@ -67,8 +67,7 @@ export default function ReportsAdmin() {
 
   return (
     <AdminLayout
-      title="Laporan Staff (Admin)"
-      subtitle="Ringkasan shift & performa per karyawan"
+      title="Laporan Staff"
       rightActions={
         <div className="flex gap-3 items-end">
           <div className="flex flex-col">
@@ -163,7 +162,8 @@ export default function ReportsAdmin() {
 
       <Modal
         open={modalOpen}
-        title={selectedCashierId ? `Detail Shift - ${selectedCashierId}` : 'Detail Shift'}
+        title="Detail Shift"
+
         onClose={() => setModalOpen(false)}
         footer={null}
       >
