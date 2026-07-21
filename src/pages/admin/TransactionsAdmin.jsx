@@ -7,6 +7,10 @@ import {
   getSalesTrendReport,
 } from '../../services/reportsAdmin.js';
 
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 import {
   ResponsiveContainer,
   AreaChart,
@@ -119,7 +123,247 @@ export default function TransactionsAdmin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryParams, trendGranularity]);
 
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
+  const exportToExcel = () => {
+    const granularityLabel = trendGranularity === 'day' ? 'Harian' : trendGranularity === 'week' ? 'Mingguan' : 'Bulanan';
+
+    // Sheet 1: Ringkasan Penjualan
+    const summaryData = [
+      { Metrik: 'Total Penjualan (Gross)', Nilai: safeNumber(salesSummary?.gross_revenue) },
+      { Metrik: 'Pendapatan Bersih (Net)', Nilai: safeNumber(salesSummary?.net_revenue) },
+      { Metrik: 'Total Pajak', Nilai: safeNumber(salesSummary?.tax_total) },
+      { Metrik: 'Total Transaksi', Nilai: safeNumber(salesSummary?.transaction_count) },
+    ];
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+
+    // Sheet 2: Produk Terlaris
+    const topProductsData = topProducts.map((p) => ({
+      Produk: p.product_name || p.name || '-',
+      Quantity: p.total_quantity ?? 0,
+      'Total Sales': safeNumber(p.total_sales),
+    }));
+    const topProductsSheet = XLSX.utils.json_to_sheet(topProductsData);
+
+    // Sheet 3: Trend Penjualan
+    const trendDataExport = trendData.map((t) => ({
+      Periode: t.time,
+      Pendapatan: safeNumber(t.revenue),
+    }));
+    const trendSheet = XLSX.utils.json_to_sheet(trendDataExport);
+
+    // Sheet 4: Daftar Transaksi
+    const transactionData = rows.map((r) => ({
+      Invoice: r.invoice_number || '',
+      Payment: r.payment_method || '',
+      Subtotal: r.subtotal || 0,
+      Tax: r.tax_amount || 0,
+      Total: r.total_amount || 0,
+      Status: r.status || '',
+    }));
+    const transactionSheet = XLSX.utils.json_to_sheet(transactionData);
+
+    // Build workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Ringkasan Penjualan');
+    XLSX.utils.book_append_sheet(wb, topProductsSheet, 'Produk Terlaris');
+    XLSX.utils.book_append_sheet(wb, trendSheet, `Trend Penjualan (${granularityLabel})`);
+    XLSX.utils.book_append_sheet(wb, transactionSheet, 'Daftar Transaksi');
+
+    // Generate filename with date range
+    const dateStr = fromDate || toDate
+      ? `_${fromDate || 'all'}_to_${toDate || 'all'}`
+      : '';
+    const filename = `Laporan_Transaksi${dateStr}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
+    setExportDropdownOpen(false);
+  };
+
+  const exportToPDF = () => {
+    try {
+      const granularityLabel = trendGranularity === 'day' ? 'Harian' : trendGranularity === 'week' ? 'Mingguan' : 'Bulanan';
+      const dateRangeText = (fromDate || toDate)
+        ? `Periode: ${fromDate || '...'} s/d ${toDate || '...'}`
+        : 'Semua Periode';
+
+      const doc = new jsPDF('landscape', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // === HEADER ===
+      doc.setFontSize(18);
+      doc.setTextColor(16, 44, 87);
+      doc.text('LAPORAN TRANSAKSI', pageWidth / 2, 18, { align: 'center' });
+
+      doc.setFontSize(10);
+      doc.setTextColor(107, 114, 128);
+      doc.text(dateRangeText, pageWidth / 2, 25, { align: 'center' });
+      doc.text(`Trend: ${granularityLabel}`, pageWidth / 2, 30, { align: 'center' });
+
+      // Divider line
+      doc.setDrawColor(16, 44, 87);
+      doc.setLineWidth(0.5);
+      doc.line(14, 34, pageWidth - 14, 34);
+
+      let yPos = 40;
+
+      // Helper to safely format a number to IDR string for PDF
+      const fmtIDR = (value) => {
+        const n = safeNumber(value);
+        if (n === 0) return 'Rp 0';
+        return `Rp ${n.toLocaleString('id-ID')}`;
+      };
+
+      // === SECTION 1: RINGKASAN PENJUALAN ===
+      doc.setFontSize(12);
+      doc.setTextColor(16, 44, 87);
+      doc.setFont(undefined, 'bold');
+      doc.text('RINGKASAN PENJUALAN', 14, yPos);
+      yPos += 6;
+
+const summaryRows = [
+        ['Total Penjualan (Gross)', fmtIDR(salesSummary?.gross_revenue)],
+        ['Pendapatan Bersih (Net)', fmtIDR(salesSummary?.net_revenue)],
+        ['Total Pajak', fmtIDR(salesSummary?.tax_total)],
+        ['Total Transaksi', String(salesSummary?.transaction_count || 0)],
+      ];
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Metrik', 'Nilai']],
+        body: summaryRows,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 44, 87], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 9 },
+        alternateRowStyles: { fillColor: [243, 244, 246] },
+        margin: { left: 14, right: 14 },
+        styles: { cellPadding: 2.5 },
+      });
+      yPos = doc.lastAutoTable.finalY + 10;
+
+      // === SECTION 2: PRODUK TERLARIS ===
+      if (topProducts.length > 0) {
+        if (yPos > 170) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.setTextColor(16, 44, 87);
+        doc.setFont(undefined, 'bold');
+        doc.text('PRODUK TERLARIS (TOP 3)', 14, yPos);
+        yPos += 6;
+
+        const topRows = topProducts.slice(0, 3).map((p) => [
+          p.product_name || p.name || '-',
+          String(p.total_quantity ?? 0),
+          fmtIDR(p.total_sales),
+        ]);
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Produk', 'Quantity', 'Total Sales']],
+          body: topRows,
+          theme: 'grid',
+          headStyles: { fillColor: [16, 44, 87], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 9 },
+          alternateRowStyles: { fillColor: [243, 244, 246] },
+          margin: { left: 14, right: 14 },
+          styles: { cellPadding: 2.5 },
+        });
+        yPos = doc.lastAutoTable.finalY + 10;
+      }
+
+      // === SECTION 3: TREND PENJUALAN ===
+      if (trendData.length > 0) {
+        if (yPos > 170) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.setTextColor(16, 44, 87);
+        doc.setFont(undefined, 'bold');
+        doc.text(`TREND PENJUALAN (${granularityLabel})`, 14, yPos);
+        yPos += 6;
+
+        const trendRows = trendData.map((t) => [
+          String(t.time),
+          fmtIDR(t.revenue),
+        ]);
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Periode', 'Pendapatan']],
+          body: trendRows,
+          theme: 'grid',
+          headStyles: { fillColor: [16, 44, 87], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 9 },
+          alternateRowStyles: { fillColor: [243, 244, 246] },
+          margin: { left: 14, right: 14 },
+          styles: { cellPadding: 2.5 },
+        });
+        yPos = doc.lastAutoTable.finalY + 10;
+      }
+
+      // === SECTION 4: DAFTAR TRANSAKSI ===
+      if (rows.length > 0) {
+        if (yPos > 170) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.setTextColor(16, 44, 87);
+        doc.setFont(undefined, 'bold');
+        doc.text('DAFTAR TRANSAKSI', 14, yPos);
+        yPos += 6;
+
+        const txnRows = rows.map((r) => [
+          String(r.invoice_number || ''),
+          String(r.payment_method || ''),
+          String(r.subtotal || 0),
+          String(r.tax_amount || 0),
+          String(r.total_amount || 0),
+          String(r.status || ''),
+        ]);
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Invoice', 'Payment', 'Subtotal', 'Tax', 'Total', 'Status']],
+          body: txnRows,
+          theme: 'grid',
+          headStyles: { fillColor: [16, 44, 87], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+          bodyStyles: { fontSize: 8 },
+          alternateRowStyles: { fillColor: [243, 244, 246] },
+          margin: { left: 14, right: 14 },
+          styles: { cellPadding: 2 },
+          tableWidth: 'auto',
+        });
+        yPos = doc.lastAutoTable.finalY + 10;
+      }
+
+      // === FOOTER ===
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(156, 163, 175);
+        doc.text(
+          `Halaman ${i} dari ${pageCount}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 8,
+          { align: 'center' }
+        );
+      }
+
+      // Save
+      const dateStr = fromDate || toDate
+        ? `_${fromDate || 'all'}_to_${toDate || 'all'}`
+        : '';
+      doc.save(`Laporan_Transaksi${dateStr}.pdf`);
+      setExportDropdownOpen(false);
+    } catch (err) {
+      console.error('PDF Export Error:', err);
+      alert(`Gagal export PDF: ${err.message}`);
+    }
+  };
 
 
   return (
@@ -274,6 +518,55 @@ export default function TransactionsAdmin() {
                 >
                   Bulanan
                 </button>
+                <div className="w-px bg-gray-300 mx-1"></div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
+                    className="px-4 py-2 text-sm border rounded-lg font-semibold flex items-center gap-1"
+                    style={{
+                      borderColor: HEX_BLUE,
+                      backgroundColor: HEX_BLUE,
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    Export
+                    <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {exportDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setExportDropdownOpen(false)}></div>
+                      <div className="absolute right-0 mt-1 z-20 bg-white border rounded-lg shadow-lg min-w-[150px]"
+                        style={{ borderColor: '#E5E7EB' }}>
+                        <button
+                          type="button"
+                          onClick={exportToExcel}
+                          className="w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 rounded-t-lg flex items-center gap-2"
+                          style={{ color: HEX_BLUE }}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Export Excel
+                        </button>
+                        <div className="h-px bg-gray-200"></div>
+                        <button
+                          type="button"
+                          onClick={exportToPDF}
+                          className="w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 rounded-b-lg flex items-center gap-2"
+                          style={{ color: HEX_BLUE }}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          Export PDF
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
