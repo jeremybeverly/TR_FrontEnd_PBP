@@ -40,9 +40,6 @@ export const voidTransaction = async (id, void_reason) => {
   return res.data.data;
 };
 
-export const getQrImageUrl = (transactionId) =>
-  `${LAN_URL}/pay/${transactionId}/qr.png`;
-
 export const getActiveShift = async () => {
   const res = await axiosClient.get('/shift');
   return res.data.data;   
@@ -68,5 +65,22 @@ export const getCashflow = async () => {
   return res.data.data;
 };
 
-export const getErrorMessage = (err) =>
-  err.response?.data?.message || err.message || 'Terjadi kesalahan';
+export const getPayUrl = (transactionId) => `${LAN_URL}/pay/${transactionId}`;
+
+export const getQrImageUrl = (transactionId) => `${LAN_URL}/pay/${transactionId}/qr.png`;
+
+export const getTransactionErrorMessage = (err) => {
+    const base = getErrorMessage(err);
+    const detail = err.response?.data?.detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+        const list = detail
+        .map((d) => `${d.ingredient} (butuh ${d.needed}, sisa ${d.available})`)
+        .join('; ');
+        return `${base} — ${list}`;
+        }
+    return base;
+};
+
+export const getErrorMessage = (err) => {
+    return err.response?.data?.message || err.message || 'Terjadi kesalahan';
+};
