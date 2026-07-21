@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" preserveAspectRatio="xMidYMid meet">
+  <rect width="320" height="240" rx="16" ry="16" fill="#F3F4F6" />
+  <g transform="translate(80 56)">
+    <rect width="160" height="128" rx="12" ry="12" fill="#E5E7EB" />
+    <path d="M16 48h128" stroke="#9CA3AF" stroke-width="12" stroke-linecap="round" />
+    <path d="M48 24h64" stroke="#9CA3AF" stroke-width="12" stroke-linecap="round" />
+    <circle cx="56" cy="88" r="12" fill="#9CA3AF" />
+    <path d="M104 80l24 24" stroke="#9CA3AF" stroke-width="12" stroke-linecap="round" />
+  </g>
+  <text x="160" y="228" text-anchor="middle" fill="#6B7280" font-family="Inter, sans-serif" font-size="14">Gambar tidak tersedia</text>
+</svg>
