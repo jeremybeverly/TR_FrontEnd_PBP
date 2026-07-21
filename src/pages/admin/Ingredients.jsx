@@ -18,9 +18,7 @@ export default function IngredientsAdmin() {
     ingredient_name: '',
     sku: '',
     unit: 'gr',
-    current_stock: 0,
     minimum_stock: 0,
-    last_cost_per_unit: 0,
   });
 
   const title = 'Bahan Baku';
@@ -54,10 +52,8 @@ export default function IngredientsAdmin() {
     setForm({
       ingredient_name: '',
       sku: '',
-      unit: 'gr',
       current_stock: 0,
       minimum_stock: 0,
-      last_cost_per_unit: 0,
     });
     setModalOpen(true);
   };
@@ -68,9 +64,7 @@ export default function IngredientsAdmin() {
       ingredient_name: row.ingredient_name || '',
       sku: row.sku || '',
       unit: row.unit || 'gr',
-      current_stock: row.current_stock ?? 0,
       minimum_stock: row.minimum_stock ?? 0,
-      last_cost_per_unit: row.last_cost_per_unit ?? 0,
     });
     setModalOpen(true);
   };
@@ -79,9 +73,7 @@ export default function IngredientsAdmin() {
     e.preventDefault();
     const payload = {
       ...form,
-      current_stock: Number(form.current_stock),
       minimum_stock: Number(form.minimum_stock),
-      last_cost_per_unit: Number(form.last_cost_per_unit),
     };
 
     setLoading(true);
@@ -258,17 +250,6 @@ export default function IngredientsAdmin() {
                 <option value="ml">ml</option>
                 <option value="pcs">pcs</option>
               </select>
-            </FormField>
-            <FormField label="Current Stock">
-              <input
-                type="number"
-                className="w-full px-3 py-2 text-sm border rounded-lg"
-                style={{ borderColor: '#E5E7EB' }}
-                value={form.current_stock}
-                onChange={(e) => setForm((p) => ({ ...p, current_stock: e.target.value }))}
-                required
-                min={0}
-              />
             </FormField>
             <FormField label="Minimum Stock">
               <input

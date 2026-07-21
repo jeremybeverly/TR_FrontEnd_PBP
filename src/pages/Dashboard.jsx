@@ -18,6 +18,8 @@ import UsersAdmin from './admin/UsersAdmin.jsx';
 import ReportsAdmin from './admin/ReportsAdmin.jsx';
 import TransactionsAdmin from './admin/TransactionsAdmin.jsx';
 import Placeholder from './admin/Placeholder.jsx';
+import ModifierAdmin from './admin/Modifier.jsx';
+import ModifierGroupAdmin from './admin/ModifierGroup.jsx';
 import { logout, getUser, getMe } from '../services/auth.js';
 import {
   getDashboardSummary,
@@ -39,6 +41,8 @@ const ICONS = {
   user: 'mdi:account-circle',
   dashboard: 'mdi:view-dashboard',
   products: 'mdi:package-variant-closed',
+  modifierGroups: 'mdi:layers-outline',
+  modifiers: 'mdi:tune-variant',
   ingredients: 'mdi:food-variant',
   stock: 'mdi:warehouse',
   suppliers: 'mdi:truck',
@@ -195,13 +199,24 @@ export default function CoreExecutiveDashboard() {
       return;
     }
 
+    if (navKey === 'ModifierAdmin') {
+      setView('ModifierAdmin');
+      setActiveNav('ModifierAdmin');
+      return;
+    }
+
+    if (navKey === 'ModifierGroupAdmin') {
+      setView('ModifierGroupAdmin');
+      setActiveNav('ModifierGroupAdmin');
+      return;
+    }
+
     if (navKey === 'IngredientsAdmin') {
       setView('IngredientsAdmin');
       setActiveNav('IngredientsAdmin');
       return;
     }
 
-    // placeholder admin pages (to be implemented next)
 
     if (navKey === 'StockAdmin') {
       setView('StockAdmin');
@@ -263,6 +278,8 @@ export default function CoreExecutiveDashboard() {
             {[
               { label: 'Dashboard', icon: 'dashboard', navKey: 'Dashboard' },
               { label: 'Katalog Produk', icon: 'products', navKey: 'ProductCatalog' },
+              { label: 'Modifier', icon: 'modifiers', navKey: 'ModifierAdmin' },
+              { label: 'Modifier Group', icon: 'modifierGroups', navKey: 'ModifierGroupAdmin' },
               { label: 'Bahan Baku', icon: 'ingredients', navKey: 'IngredientsAdmin' },
               { label: 'Manajemen Stok', icon: 'stock', navKey: 'StockAdmin' },
               { label: 'Suppliers', icon: 'suppliers', navKey: 'SuppliersAdmin' },
@@ -333,7 +350,11 @@ export default function CoreExecutiveDashboard() {
               <ReportsAdmin />
             ) : view === 'TransactionsAdmin' ? (
               <TransactionsAdmin />
-            ) : (
+            ) : view === 'ModifierAdmin' ? (
+              <ModifierAdmin />
+            ) : ( view === 'ModifierGroupAdmin' ? (
+              <ModifierGroupAdmin />
+            ) : 
 
               <>
                 <div className="flex items-start justify-between gap-4">
