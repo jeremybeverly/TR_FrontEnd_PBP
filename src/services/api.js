@@ -58,6 +58,23 @@ function getToken() {
     return localStorage.getItem('token');
 }
 
+let isRedirectingToLogin = false;
+
+function clearAuthAndRedirectToLogin() {
+    // Prevent redirect loop when multiple requests fail simultaneously.
+    if (isRedirectingToLogin) return;
+    isRedirectingToLogin = true;
+
+    try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+    } catch {
+        // ignore
+    }
+
+    window.location.href = '/login';
+}
+
 async function apiFetch(path, { method = 'GET', body, headers = {}, tokenRequired = true } = {}) {
     const token = getToken();
 
@@ -85,6 +102,11 @@ async function apiFetch(path, { method = 'GET', body, headers = {}, tokenRequire
     }
 
     if (!res.ok) {
+        if (res.status === 401 && tokenRequired) {
+            clearAuthAndRedirectToLogin();
+            return data;
+        }
+
         const message = data?.message || `Request failed (${res.status})`;
         const err = new Error(message);
         err.status = res.status;

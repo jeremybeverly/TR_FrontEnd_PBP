@@ -92,8 +92,7 @@ export default function SuppliersAdmin() {
 
   return (
     <AdminLayout
-      title="Suppliers (Admin)"
-      subtitle="CRUD Supplier"
+      title="Suppliers"
       rightActions={
         <button
           type="button"
@@ -131,9 +130,9 @@ export default function SuppliersAdmin() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-gray-500">
-                  <th className="py-2">Supplier</th>
-                  <th className="py-2">Contact</th>
-                  <th className="py-2">Phone</th>
+                  <th className="py-2">Nama Supplier</th>
+                  <th className="py-2">Nama Kontak</th>
+                  <th className="py-2">Nomor Telepon</th>
                   <th className="py-2">Email</th>
                   <th className="py-2 text-right">Aksi</th>
                 </tr>
@@ -174,7 +173,7 @@ export default function SuppliersAdmin() {
       <Modal open={modalOpen} title={editingId ? 'Edit Supplier' : 'Tambah Supplier'} onClose={() => setModalOpen(false)} footer={null}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Supplier Name">
+            <FormField label="Nama  Supplier">
               <input
                 className="w-full px-3 py-2 text-sm border rounded-lg"
                 style={{ borderColor: '#E5E7EB' }}
@@ -183,7 +182,7 @@ export default function SuppliersAdmin() {
                 required
               />
             </FormField>
-            <FormField label="Contact Person">
+            <FormField label="Nama Kontak">
               <input
                 className="w-full px-3 py-2 text-sm border rounded-lg"
                 style={{ borderColor: '#E5E7EB' }}
@@ -195,7 +194,7 @@ export default function SuppliersAdmin() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Phone">
+            <FormField label="Nomor Telepon">
               <input
                 className="w-full px-3 py-2 text-sm border rounded-lg"
                 style={{ borderColor: '#E5E7EB' }}
@@ -215,7 +214,7 @@ export default function SuppliersAdmin() {
             </FormField>
           </div>
 
-          <FormField label="Address">
+          <FormField label="Alamat">
             <textarea
               className="w-full px-3 py-2 text-sm border rounded-lg"
               style={{ borderColor: '#E5E7EB', minHeight: 90 }}

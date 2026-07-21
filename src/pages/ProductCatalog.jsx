@@ -66,9 +66,6 @@ export default function ProductCatalog() {
                     <h1 className="text-3xl font-bold" style={{ color: HEX_BLUE }}>
                         Katalog Produk
                     </h1>
-                    <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-                        Menampilkan produk sesuai data backend. Gunakan filter kategori atau pencarian untuk menemukan menu dengan cepat.
-                    </p>
                 </div>
             </div>
 
