@@ -3,6 +3,7 @@ import Sidebar from '../../components/CashierSidebar';
 import { logout } from '../../services/auth';
 import CashierHome from './Home';
 import CashierShift from './Shift';
+import CashierHistory from './History';
 
 export default function KasirApp() {
     const [view, setView] = useState('home');
@@ -23,7 +24,7 @@ export default function KasirApp() {
         <main className="flex-1 overflow-hidden">
             {view === 'home'    && <CashierHome/>}
             {view === 'shift'   && <CashierShift/>}
-            {view === 'history' && <div className="p-6 text-2xl font-bold">Riwayat Transaksi</div>}
+            {view === 'history' && <CashierHistory/>}
         </main>
         </div>
     );

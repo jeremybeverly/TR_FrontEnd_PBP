@@ -180,6 +180,7 @@ export default function CashierShift() {
                 entries={cashflows}
                 loading={loadingLists}
                 error={error}/>
+                
                 <ShiftTransactions
                 transactions={transactions}
                 loading={loadingLists}
