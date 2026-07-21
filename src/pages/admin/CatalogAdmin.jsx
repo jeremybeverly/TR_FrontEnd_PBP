@@ -101,14 +101,23 @@ export default function CatalogAdmin() {
     setModalOpen(true);
   };
 
-  const openEdit = (row) => {
+  const toId = (value) =>
+    value && typeof value === 'object'
+      ? String(value._id ?? value.id ?? '')
+      : String(value ?? '');
+
+   const openEdit = (row) => {
     setEditingId(row._id);
     setForm({
       product_name: row.product_name || '',
       category: row.category || 'coffee',
       price: row.price || 0,
-      recipe: row.recipe || [],
-      modifier_groups: row.modifier_groups || [],
+      recipe: normalizeArray(row.recipe).map((r) => ({
+        ingredient_id: toId(r.ingredient_id),
+        quantity_required: Number(r.quantity_required ?? 0),
+        unit: r.ingredient_id?.unit ?? r.unit ?? '',
+      })),
+      modifier_groups: normalizeArray(row.modifier_groups).map(toId),
       is_available: row.is_available ?? true,
       image: null,
     });
