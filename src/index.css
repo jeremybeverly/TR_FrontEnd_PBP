@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@theme {
+  --color-navy:  #00173A;   
+  --color-brown: #56442D;   
+  --color-beige: #EADBC8;  
+  --color-cream: #FDF9F5;   
+}
+
 :root {
     --text-h: #102C57;
     --text: #102C57;
