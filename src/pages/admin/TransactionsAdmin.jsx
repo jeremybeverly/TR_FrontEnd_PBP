@@ -741,10 +741,6 @@ const summaryRows = [
           </div>
         </div>
 
-        <div className="mt-3 text-xs text-gray-600">
-          Catatan: endpoint void hanya diizinkan untuk role cashier.
-        </div>
-
       </div>
     </AdminLayout>
   );
