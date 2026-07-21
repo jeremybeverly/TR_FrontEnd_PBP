@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Login from './pages/Login.jsx';
 import CoreExecutiveDashboard from './pages/Dashboard.jsx';
-import KasirApp from './pages/cashier/test.jsx';
+import CashierApp from './pages/cashier/CashierApp.jsx';
 import { getUser } from './services/auth.js';
 
 export default function App() {
@@ -19,7 +19,7 @@ export default function App() {
 
   if (!token) return <Login />;
 
-  if (user?.role === 'cashier') return <KasirApp />;
+  if (user?.role === 'cashier') return <CashierApp />;
 
   return <CoreExecutiveDashboard />;
 }
